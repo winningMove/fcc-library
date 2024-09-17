@@ -8,13 +8,10 @@
 
 "use strict";
 
-import Book from "../model/Book.mjs";
-import mongoose from "mongoose";
-const express = require("express");
-const app = express();
+const Book = require("../model/Book.js");
+const mongoose = require("mongoose");
 
-// after done, remove express imports and pass app to exports function
-module.exports = async function () {
+module.exports = async function (app) {
   await mongoose.connect(process.env.DB).catch((e) => {
     console.log("Error connecting to db: " + e);
   });
