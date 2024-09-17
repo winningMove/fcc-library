@@ -3,6 +3,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 const apiRoutes = require("./routes/api.js");
@@ -18,21 +19,32 @@ app.use(cors({ origin: "*" })); //USED FOR FCC TESTING PURPOSES ONLY!
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-//Index page (static HTML)
-app.route("/").get(function (req, res) {
-  res.sendFile(process.cwd() + "/views/index.html");
-});
+mongoose
+  .connect(process.env.DB)
+  .then(() => {
+    console.log("Database connected.");
+    mongoose.connection.on("error", (e) => {
+      console.log("Error in database connection: " + e);
+    });
+    //For FCC testing purposes
+    fccTestingRoutes(app);
 
-//For FCC testing purposes
-fccTestingRoutes(app);
+    //Routing for API
+    apiRoutes(app);
 
-//Routing for API
-apiRoutes(app);
+    //Index page (static HTML)
+    app.route("/").get(function (req, res) {
+      res.sendFile(process.cwd() + "/views/index.html");
+    });
 
-//404 Not Found Middleware
-app.use(function (req, res, next) {
-  res.status(404).type("text").send("Not Found");
-});
+    //404 Not Found Middleware
+    app.use(function (req, res, next) {
+      res.status(404).type("text").send("Not Found");
+    });
+  })
+  .catch((e) => {
+    console.log("Db connection failed: " + e);
+  });
 
 //Start our server and tests!
 const listener = app.listen(process.env.PORT || 3000, function () {

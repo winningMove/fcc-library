@@ -9,27 +9,20 @@
 "use strict";
 
 const Book = require("../model/Book.js");
-const mongoose = require("mongoose");
 
 module.exports = async function (app) {
-  await mongoose.connect(process.env.DB).catch((e) => {
-    console.log("Error connecting to db: " + e);
-  });
-  mongoose.connection.on("error", (e) => {
-    console.log("Error in database connection: " + e);
-  });
-
   app
     .route("/api/books")
     .get(async function (req, res) {
       //response will be array of book objects
       //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
-      const books = await Book.find({}).exec();
+      const books = await Book.find({}).lean().exec();
       if (books.length === 0) return res.json([]);
 
       res.json(
-        books.map(({ comments, ...book }) => ({
-          book,
+        books.map(({ comments, _id, title }) => ({
+          _id,
+          title,
           commentcount: comments.length,
         }))
       );
@@ -57,10 +50,10 @@ module.exports = async function (app) {
       const bookid = req.params.id;
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
 
-      const book = await Book.findById(bookid).exec();
+      const { __v, ...book } = await Book.findById(bookid).lean().exec();
       if (!book) return res.send("no book exists");
 
-      res.json(JSON.stringify(book));
+      res.json(book);
     })
 
     .post(async function (req, res) {
@@ -70,23 +63,23 @@ module.exports = async function (app) {
 
       if (!comment) return res.send("missing required field comment");
 
-      let book = await Book.findById(bookid).exec();
+      let book = await Book.findById(bookid).lean().exec();
       if (!book) return res.send("no book exists");
 
       book.comments.push(comment);
-      book = await book.save();
+      const { _id, title, comments } = await book.save();
 
-      res.json(JSON.stringify(book));
+      res.json({ _id, title, comments });
     })
 
     .delete(async function (req, res) {
       const bookid = req.params.id;
       //if successful response will be 'delete successful'
 
-      let book = await Book.findById(bookid).exec();
+      let book = await Book.findById(bookid).lean().exec();
       if (!book) return res.send("no book exists");
 
-      book = await book.deleteOne().exec();
+      await Book.deleteOne({ _id: bookid }).exec();
       res.send("delete successful");
     });
 };
