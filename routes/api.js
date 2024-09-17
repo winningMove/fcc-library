@@ -50,7 +50,7 @@ module.exports = async function (app) {
       const bookid = req.params.id;
       //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
 
-      const { __v, ...book } = await Book.findById(bookid).lean().exec();
+      const book = await Book.findById(bookid).lean().exec();
       if (!book) return res.send("no book exists");
 
       res.json(book);
@@ -63,7 +63,7 @@ module.exports = async function (app) {
 
       if (!comment) return res.send("missing required field comment");
 
-      let book = await Book.findById(bookid).lean().exec();
+      let book = await Book.findById(bookid).exec();
       if (!book) return res.send("no book exists");
 
       book.comments.push(comment);

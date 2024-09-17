@@ -41,6 +41,18 @@ mongoose
     app.use(function (req, res, next) {
       res.status(404).type("text").send("Not Found");
     });
+
+    if (process.env.NODE_ENV === "test") {
+      console.log("Running Tests...");
+      setTimeout(function () {
+        try {
+          runner.run();
+        } catch (e) {
+          console.log("Tests are not valid:");
+          console.error(e);
+        }
+      }, 1500);
+    }
   })
   .catch((e) => {
     console.log("Db connection failed: " + e);
@@ -49,17 +61,6 @@ mongoose
 //Start our server and tests!
 const listener = app.listen(process.env.PORT || 3000, function () {
   console.log("Your app is listening on port " + listener.address().port);
-  if (process.env.NODE_ENV === "test") {
-    console.log("Running Tests...");
-    setTimeout(function () {
-      try {
-        runner.run();
-      } catch (e) {
-        console.log("Tests are not valid:");
-        console.error(e);
-      }
-    }, 1500);
-  }
 });
 
 module.exports = app; //for unit/functional testing
